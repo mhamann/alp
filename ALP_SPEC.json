@@ -1,5 +1,5 @@
 {
-  "spec_version": "0.1.0",
+  "spec_version": "0.1.1",
   "overview": {
     "format": "line-delimited JSON (.alp). Each line is one JSON object.",
     "kinds": ["@shape", "@fn", "@flow"],
@@ -7,7 +7,8 @@
     "validation": "Outputs are validated against @expect.type shapes; defaults applied before validation; result may be synthesized from env to satisfy shape fields.",
     "arg_resolution": "$name and $dotted.path resolution inside @op args and @llm.input. Resolution is recursive within lists/objects.",
     "bindings": "Each @op may include third metadata object {\"as\":\"name\"} to bind the op result in env.",
-    "env_exposure": "$result holds last op result; if result is numeric or has a numeric field \"value\", that value is also exposed as $value."
+    "env_exposure": "$result holds last op result; if result is numeric or has a numeric field \"value\", that value is also exposed as $value.",
+    "stable_vocab": "VM accepts either text tokens (@shape,@fn,...) or their SDK-shipped concept IDs (CIDs). CIDs are stable hashes mapped to canonical tokens."
   },
   "types": {
     "primitives": ["str", "int", "float", "bool", "ts"],

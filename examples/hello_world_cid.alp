@@ -1,0 +1,7 @@
+{"kind":"0x499b6632925a5db2","id":"TextInput","fields":{"text":"str"}}
+{"kind":"0x499b6632925a5db2","id":"Greeting","fields":{"text":"str"}}
+{"kind":"0x499b6632925a5db2","id":"Reply","fields":{"text":"str"}}
+{"kind":"0xd860837e68f66402","id":"say_hello","0xe2c6a301aeaa5f30":{"text":"Hello, World!"},"@expect":{"type":"TextInput","synthesize":true}}
+{"kind":"0xd860837e68f66402","id":"make_greeting","0x3ba29841b21eea75":{"input":"TextInput"},"0x65d0d36d94ba38f7":"Greeting","0x47a16a301268de09":[["concat", {"a":"$input.text","b":""}, {"as":"text"}]], "@expect":{"type":"Greeting","synthesize":true}}
+{"kind":"0xd860837e68f66402","id":"respond","0x3ba29841b21eea75":{"greeting":"Greeting"},"0x65d0d36d94ba38f7":"Reply","0x47a16a301268de09":[["llm", {"task":"friendlify","input":{"greeting":"$greeting"},"schema":"Reply"}, {"as":"rep"}], ["coalesce_str", {"items":["$rep.text","$greeting.text"]}, {"as":"text"}]], "@expect":{"type":"Reply","synthesize":true}}
+{"kind":"0x567b5df3969b2fa9","edges":[["say_hello","make_greeting",{}],["make_greeting","respond",{}]]}

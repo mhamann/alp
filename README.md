@@ -15,6 +15,13 @@ ALP_HTTP_ALLOWLIST=example.com uv run python main.py examples/io_example.alp
 - `@fn` — function node with optional `in`, `out`, `@const`, `@op`, `@llm`, `@expect`, `@retry`
 - `@flow` — list of edges `[src, dst, meta]`
 
+### Stable vocabulary (tokens <-> concept IDs)
+
+- The VM accepts either textual tokens or stable concept IDs (CIDs) shipped with the SDK for core constructs.
+- Supported tokens: `@def`, `@fn`, `@op`, `@llm`, `@tool`, `@flow`, `@in`, `@out`, `@expect`, `@shape`, `@intent`, `@emb`, `@pkg`, `@caps`, `@const`, `@var`, `@err`, `@retry`, `@cache`, `@idemp`, `@trace`, `@hash`, `@ver`, `@meta`, `@test`.
+- Keys `@in`/`@out` normalize to `in`/`out` fields for compatibility with existing programs.
+- See `runtime/vocab.py` for the token->CID mapping and meanings, and to export the list for SDKs.
+
 ### Built-in ops
 - `add({ a, b }) -> number`
 - `sub({ a, b }) -> number`

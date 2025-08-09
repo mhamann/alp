@@ -5,6 +5,10 @@ import time
 import sys
 import os
 
+# Ensure project root is on sys.path when running this file directly
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Global op registry: name -> callable(args: dict, ctx: dict) -> any
 OPS: dict[str, object] = {}
 
@@ -32,7 +36,12 @@ def load_graph(path):
                 if not line.strip():
                     continue
                 n = json.loads(line)
-                if n["kind"] == "@import":
+                try:
+                    from runtime.vocab import normalize_node as _normalize_node
+                    n = _normalize_node(n)
+                except Exception:
+                    pass
+                if n.get("kind") == "@import":
                     rel = n.get("path")
                     if not isinstance(rel, str) or not rel:
                         continue
@@ -40,16 +49,16 @@ def load_graph(path):
                     s2, f2, fl2 = load_graph(child)
                     _merge(s2, f2, fl2)
                     continue
-                if n["kind"] == "@shape":
+                if n.get("kind") == "@shape":
                     shape_def = {"fields": n.get("fields", {})}
                     if "defaults" in n:
                         shape_def["defaults"] = n["defaults"]
                     if "doc" in n:
                         shape_def["doc"] = n["doc"]
                     shapes[n["id"]] = shape_def
-                elif n["kind"] == "@fn":
+                elif n.get("kind") == "@fn":
                     fns[n["id"]] = n
-                elif n["kind"] == "@flow":
+                elif n.get("kind") == "@flow":
                     flow.extend(n.get("edges", []))
 
     _load_file(path, set())
@@ -333,12 +342,12 @@ def exec_fn(fn, shapes, fns, inbound=None):
             for name in declared_inputs.keys():
                 env[name] = inbound
 
-    for k, v in fn.get("@const", {}).items():
+    for k, v in (fn.get("@const") or {}).items():
         env[k] = v
 
     explain = bool(os.getenv("ALP_EXPLAIN"))
     provenance = []
-    for idx, op in enumerate(fn.get("@op", [])):
+    for idx, op in enumerate((fn.get("@op") or [])):
         name, args = op[0], (op[1] if len(op) > 1 else {})
         bind_meta = (op[2] if len(op) > 2 and isinstance(op[2], dict) else {})
         a = resolve_args(args, env)
@@ -373,8 +382,8 @@ def exec_fn(fn, shapes, fns, inbound=None):
             except Exception:
                 pass
 
-    if "@llm" in fn:
-        spec = fn["@llm"]
+    if fn.get("@llm") is not None:
+        spec = fn.get("@llm") or {}
         task = spec.get("task")
         inp = resolve_args(spec.get("input") or {}, env)
         if not inp and inbound is not None:
