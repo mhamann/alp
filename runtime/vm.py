@@ -614,6 +614,8 @@ def exec_fn(fn, shapes, fns, inbound=None, tools=None):
             "shapes": shapes,
             "fns": fns,
             "tools": tools or {},
+            "ops": OPS,  # Pass the operations registry to operations
+            "original_args": args,  # Pass original unresolved args for ops that need them
             "exec_fn": lambda _fn, _inb=None: exec_fn(_fn, shapes, fns, inbound=_inb, tools=tools),
             "call_llm": lambda task, input_obj, schema, _shapes, retries=3, provider=None, model=None: call_llm(task, input_obj, schema, shapes, retries=retries, provider=provider, model=model),
             "call_llm_batch": lambda task, items, schema, _shapes, retries=3, provider=None, model=None: call_llm_batch(task, items, schema, shapes, retries=retries, provider=provider, model=model),
@@ -676,23 +678,32 @@ def exec_fn(fn, shapes, fns, inbound=None, tools=None):
         }
         provenance.append(prov)
 
-    exp_type = (fn.get("@expect") or {}).get("type")
-    if exp_type:
-        synth = (fn.get("@expect") or {}).get("synthesize") is True
-        if synth and (result is None or not isinstance(result, dict)):
-            shape_def = _get_shape_def(exp_type, shapes)
-            fields = shape_def.get("fields", {})
-            synthesized = {}
-            for k in fields.keys():
-                key = k[:-1] if k.endswith("?") else k
-                if key in env:
-                    synthesized[key] = env[key]
-            if synthesized:
-                result = synthesized
-        if isinstance(result, dict):
-            result = _apply_shape_defaults(result, exp_type, shapes)
-        if "@llm" not in fn:
-            validate_against_shape(result, exp_type, shapes)
+    # Handle @expect - either as a type validation or as a result template
+    expect = fn.get("@expect")
+    if expect:
+        exp_type = expect.get("type") if isinstance(expect, dict) else None
+        
+        # If @expect is a dict without a type field, use it as a template for the result
+        if isinstance(expect, dict) and not exp_type:
+            # Resolve the template using the environment
+            result = resolve_args(expect, env)
+        elif exp_type:
+            # Original type-based handling
+            synth = expect.get("synthesize") is True
+            if synth and (result is None or not isinstance(result, dict)):
+                shape_def = _get_shape_def(exp_type, shapes)
+                fields = shape_def.get("fields", {})
+                synthesized = {}
+                for k in fields.keys():
+                    key = k[:-1] if k.endswith("?") else k
+                    if key in env:
+                        synthesized[key] = env[key]
+                if synthesized:
+                    result = synthesized
+            if isinstance(result, dict):
+                result = _apply_shape_defaults(result, exp_type, shapes)
+            if "@llm" not in fn:
+                validate_against_shape(result, exp_type, shapes)
 
     # Provenance opt-in: suppress hashes if ALP_PROVENANCE_MINIMAL=1
     minimal_prov = os.getenv("ALP_PROVENANCE_MINIMAL", "0") in ("1", "true", "yes")

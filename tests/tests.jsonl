@@ -1,0 +1,6 @@
+{"program":"examples/hello_world.alp","expectKeys":["result.text"]}
+{"program":"examples/calculator.alp","expectKeys":["result.value"],"expectContains":{"result.value":"9"}}
+{"program":"examples/conditionals_demo.alp","expectKeys":["result.if_large","result.if_small","result.switch","result.try_catch"]}
+{"program":"examples/json_ops_demo.alp","expectKeys":["result.original","result.modified","result.filtered","result.mapped"]}
+{"program":"examples/string_ops_demo.alp","expectKeys":["result.regex_test","result.replace_test","result.format_test","result.case_test","result.hash_test"]}
+{"program":"examples/file_ops_demo.alp","expectKeys":["result.cwd_files","result.test_file","result.glob_results","result.path_info"]}

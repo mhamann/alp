@@ -1,0 +1,5 @@
+{"kind":"@shape","id":"FileDemo","fields":{"cwd_files":"dict","test_file":"dict","glob_results":"dict","path_info":"dict"}}
+
+{"kind":"@fn","id":"demo_file_ops","in":{},"out":"FileDemo","@op":[["list_files",{"path":".","pattern":"*.alp","type":"file"},{"as":"alp_files"}],["file_exists",{"path":"README.md"},{"as":"readme_exists"}],["glob",{"pattern":"examples/*.alp","recursive":false},{"as":"example_files"}],["file_info",{"path":"main.py"},{"as":"main_info"}],["path_split",{"path":"examples/demo/test.alp"},{"as":"path_parts"}],["path_join",{"parts":["examples","new","demo.alp"]},{"as":"joined_path"}]],"@expect":{"cwd_files":"$alp_files","test_file":"$readme_exists","glob_results":"$example_files","path_info":"$main_info"}}
+
+{"kind":"@flow","edges":[["demo_file_ops",null,{}]]}

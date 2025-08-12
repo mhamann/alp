@@ -8,9 +8,11 @@ from . import paths as paths
 from . import iter as iterlib
 from . import llm as llm
 from . import tools as tools
+from . import conditionals as conditionals
 
 
 def register_all(ops_registry: dict, register_op):
-    for mod in (math, strings, strings_extra, jsonlib, io, http, paths, iterlib, llm, tools):
+    for mod in (math, strings, strings_extra, jsonlib, io, http, paths, iterlib, llm, tools, 
+                conditionals):
         if hasattr(mod, "register"):
             mod.register(register_op)

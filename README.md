@@ -72,6 +72,8 @@ Use tools via the `tool_call` operation: `["tool_call", {"tool": "tool_id", "arg
 - See `runtime/vocab.py` for the token->CID mapping and meanings, and to export the list for SDKs.
 
 ### Built-in ops
+
+#### Math Operations
 - `add({ a, b }) -> number`
 - `sub({ a, b }) -> number`
 - `mul({ a, b }) -> number`
@@ -81,11 +83,51 @@ Use tools via the `tool_call` operation: `["tool_call", {"tool": "tool_id", "arg
 - `calc_eval({ expr }) -> { value }` — safe arithmetic evaluator supporting `+ - * / // % **`, parentheses, and `^` as exponent.
 - `min({ a, b } | { items }) -> number`, `max({ a, b } | { items }) -> number`, `abs({ x }) -> number`, `round({ x, ndigits? }) -> number`
 - `sum({ items:list<number> }) -> number`, `avg({ items:list<number> }) -> number`
-- Strings: `concat({ a, b } | { items }) -> string`, `join({ items, sep }) -> string`, `split({ text, sep }) -> list<string>`
-- File I/O: `read_file({ path, encoding? }) -> { text }`, `write_file({ path, text, encoding?, append? }) -> { ok }`
-- HTTP: Generic `http({ method, url, headers?, json?|data? }) -> { status:int, text:str }`
-- Tools: `tool_call({ tool, args }) -> object` — call external tool defined with `@tool`
- - Stdin: `read_stdin({ mode?: "all"|"line", max_bytes? }) -> { text }` (requires `ALP_STDIN_ALLOW=1`)
+
+#### String Operations
+- `concat({ a, b } | { items }) -> string`, `join({ items, sep }) -> string`, `split({ text, sep }) -> list<string>`
+- `regex_match({ text, pattern, flags? }) -> { matched, text, groups, start, end }` — regex pattern matching
+- `regex_replace({ text, pattern, replacement, flags?, count? }) -> { result, count }` — regex substitution
+- `replace({ text, find, replace, count? }) -> { result, count }` — simple string replacement
+- `format({ template, values, safe? }) -> { result }` — string formatting with {key} placeholders
+- `trim({ text, mode?, chars? }) -> { result }` — remove whitespace or specified chars
+- `case({ text, mode }) -> { result }` — case conversion (upper, lower, title, capitalize, snake, camel)
+- `substring({ text, start, end?|length? }) -> { result }` — extract substring
+- `encode_decode({ text, operation, format }) -> { result }` — encode/decode (base64, url, hex, html)
+- `hash({ text, algorithm }) -> { hash }` — generate hash (md5, sha1, sha256, sha512)
+
+#### Control Flow
+- `if({ condition, then, else? }) -> any` — conditional execution
+- `switch({ value, cases, default? }) -> any` — multi-branch selection
+- `try({ do, catch, finally? }) -> { result, error, success }` — error handling
+
+#### JSON Operations
+- `json_parse({ text }) -> object` — parse JSON string
+- `json_get({ obj, path }) -> any` — get value at dot path
+- `json_set({ obj, path, value, create? }) -> { result, modified }` — set value at path
+- `json_merge({ objects, deep? }) -> { result }` — merge multiple objects
+- `json_filter({ array, field?, value?, condition?, fn? }) -> { result, count }` — filter array elements
+- `json_map({ array, field?, fn?, template? }) -> { result, count }` — transform array elements
+- `json_delete({ obj, path }) -> { result, deleted }` — delete path from object
+
+#### File System Operations
+- `read_file({ path, encoding? }) -> { text }` — read file contents
+- `write_file({ path, text, encoding?, append? }) -> { ok }` — write file
+- `list_files({ path?, pattern?, recursive?, type? }) -> { files, count }` — list directory contents
+- `file_exists({ path }) -> { exists, type }` — check file/directory existence
+- `glob({ pattern, root?, recursive? }) -> { matches, count }` — find files by pattern
+- `file_info({ path }) -> { size, modified, created, ... }` — get file metadata
+- `mkdir({ path, parents?, exist_ok? }) -> { created }` — create directory
+- `copy_file({ source, destination, overwrite? }) -> { copied }` — copy file/directory
+- `move_file({ source, destination, overwrite? }) -> { moved }` — move/rename file
+- `delete_file({ path, recursive? }) -> { deleted }` — delete file/directory
+- `path_join({ parts }) -> { path }` — join path components
+- `path_split({ path }) -> { dir, base, name, ext, parts }` — split path into components
+
+#### Other Operations
+- `http({ method, url, headers?, json?|data? }) -> { status:int, text:str }` — HTTP requests
+- `tool_call({ tool, args }) -> object` — call external tool defined with `@tool`
+- `read_stdin({ mode?: "all"|"line", max_bytes? }) -> { text }` (requires `ALP_STDIN_ALLOW=1`)
 
 ### Variables and argument resolution
 
