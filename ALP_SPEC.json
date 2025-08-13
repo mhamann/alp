@@ -2,13 +2,14 @@
   "spec_version": "0.1.1",
   "overview": {
     "format": "line-delimited JSON (.alp). Each line is one JSON object.",
-    "kinds": ["@shape", "@fn", "@flow"],
+    "kinds": ["@shape", "@fn", "@flow", "@def", "@tool", "@import"],
     "execution": "Linear traversal of @flow.edges in file order. Each edge is [src, dst, meta]. If meta.when is truthy, dst executes with src output as inbound.",
     "validation": "Outputs are validated against @expect.type shapes; defaults applied before validation; result may be synthesized from env to satisfy shape fields.",
     "arg_resolution": "$name and $dotted.path resolution inside @op args and @llm.input. Resolution is recursive within lists/objects.",
     "bindings": "Each @op may include third metadata object {\"as\":\"name\"} to bind the op result in env.",
     "env_exposure": "$result holds last op result; if result is numeric or has a numeric field \"value\", that value is also exposed as $value.",
-    "stable_vocab": "VM accepts either text tokens (@shape,@fn,...) or their SDK-shipped concept IDs (CIDs). CIDs are stable hashes mapped to canonical tokens."
+    "stable_vocab": "VM accepts either text tokens (@shape,@fn,...) or their SDK-shipped concept IDs (CIDs). CIDs are stable hashes mapped to canonical tokens.",
+    "imports": "@import allows including other .alp files to reuse shapes, functions, and tools"
   },
   "types": {
     "primitives": ["str", "int", "float", "bool", "ts"],
@@ -21,6 +22,11 @@
     "enum": "enum<a,b,c>"
   },
   "nodes": {
+    "@import": {
+      "path": "string path to .alp file to import",
+      "notes": "Imports shapes, functions, and tools from another file",
+      "example": {"kind":"@import","path":"../calculator.alp"}
+    },
     "@def": {
       "id": "string",
       "type": "type specification: primitive, alias, union (A | B), literal array, or constraint object",
@@ -136,6 +142,26 @@
     "ALP_TOOL_COMMAND_ALLOWLIST": "comma-separated command prefixes allowed",
     "ALP_TOOL_PYTHON_MODULES": "comma-separated Python modules allowed",
     "ALP_TOOL_CWD": "working directory for command tools (default: CWD)"
+  },
+  "extras": {
+    "ui_gradio": {
+      "location": "runtime/extras/ui_gradio.py",
+      "description": "Optional Gradio-based UI operations for creating web interfaces",
+      "operations": [
+        {"name":"ui_create","args":{"title":"string","description?":"string","theme?":"string"},"returns":"object","notes":"Initialize UI configuration"},
+        {"name":"ui_add_input","args":{"name":"string","type":"string","label?":"string","default?":"any","options?":"any[]"},"returns":"object","notes":"Add input component: textbox, number, slider, dropdown"},
+        {"name":"ui_add_output","args":{"name":"string","type":"string","label?":"string"},"returns":"object","notes":"Add output component: textbox, json, markdown"},
+        {"name":"ui_set_handler","args":{"function":"string","inputs":"string[]","outputs":"string[]"},"returns":"object","notes":"Connect ALP function to UI"},
+        {"name":"ui_launch","args":{"port?":"number","share?":"bool","debug?":"bool"},"returns":"object","notes":"Start Gradio server"},
+        {"name":"ui_wait","args":{"timeout?":"number"},"returns":"object","notes":"Keep UI server running"}
+      ],
+      "architecture": {
+        "separation_of_concerns": "UI files should only handle interface and orchestration",
+        "imports": "Use @import to include logic modules instead of duplicating",
+        "pattern": "UI files in examples/ui/*.alp import from examples/*.alp",
+        "best_practice": "UI functions orchestrate imported logic functions"
+      }
+    }
   },
   "debug": {
     "ALP_EXPLAIN": "1 to print env snapshots after each op to stderr"

@@ -1,0 +1,167 @@
+# ALP (Artificial Logic Protocol) Project Rules
+
+## Language Overview
+ALP is a JSON-based declarative programming language for LLMs using line-delimited JSON format.
+
+## File Structure
+- `.alp` files contain one JSON object per line
+- Each line must be valid JSON
+- Supported node types: @shape, @fn, @flow, @def, @tool, @import
+
+## Code Patterns
+
+### Basic Function Structure
+```json
+{"kind":"@fn","id":"function_name","in":"InputShape","out":"OutputShape","@op":[["operation",{"arg":"value"}]]}
+```
+
+### Shape Definition
+```json
+{"kind":"@shape","id":"ShapeName","fields":{"field1":"str","field2":"int","optional?":"bool"}}
+```
+
+### Flow Definition
+```json
+{"kind":"@flow","edges":[["source","destination",{"when":{"condition":true}}]]}
+```
+
+### Import Statement
+```json
+{"kind":"@import","path":"../module.alp"}
+```
+
+## UI Development Rules
+
+### CRITICAL: Separation of Concerns
+1. **UI files** (`examples/ui/*.alp`) - ONLY handle interface, NO business logic
+2. **Logic files** (`examples/*.alp`) - Contain ALL business logic
+3. **ALWAYS use @import** - Never duplicate logic in UI files
+
+### UI Pattern Template
+```json
+// ALWAYS start UI files with imports
+{"kind":"@import","path":"../logic_module.alp"}
+
+// UI handler orchestrates imported functions
+{"kind":"@fn","id":"ui_handler","in":"UIInput","out":"UIOutput",
+  "@op":[["imported_function",{"param":"$in.value"}]]}
+
+// UI creation function
+{"kind":"@fn","id":"create_ui","@op":[
+  ["ui_create",{"title":"App Title"}],
+  ["ui_add_input",{"name":"input_name","type":"textbox"}],
+  ["ui_add_output",{"name":"output_name","type":"json"}],
+  ["ui_set_handler",{"function":"ui_handler","inputs":["input_name"],"outputs":["output_name"]}],
+  ["ui_launch",{"port":7860}],
+  ["ui_wait",{}]
+]}
+```
+
+### UI Operations (extras/ui_gradio)
+- `ui_create` - Initialize UI configuration
+- `ui_add_input` - Add input component (textbox, number, slider, dropdown)
+- `ui_add_output` - Add output component (textbox, json, markdown)
+- `ui_set_handler` - Connect ALP function to UI
+- `ui_launch` - Start Gradio server
+- `ui_wait` - Keep server running
+
+## Standard Operations
+
+### Core Math
+- `add`, `sub`, `mul`, `div`, `pow`, `neg`
+- `min`, `max`, `abs`, `round`, `sum`, `avg`
+- `calc_eval` - Safe expression evaluator
+
+### String Operations
+- `concat`, `join`, `split`
+
+### JSON Operations
+- `json_parse`, `json_get`
+
+### File I/O
+- `read_file`, `write_file`
+- Sandboxed to ALP_IO_ROOT
+
+### HTTP
+- `http` - Requires ALP_HTTP_ALLOWLIST
+
+### Control Flow
+- `if` - Conditional with then/else
+- `switch` - Multi-case branching
+- `try_catch` - Error handling
+
+## Best Practices
+
+### General
+1. One operation per line in @op arrays
+2. Use descriptive IDs for shapes and functions
+3. Always validate inputs with shapes
+4. Handle errors with try_catch
+5. Use meaningful "as" bindings for operation results
+
+### UI Specific
+1. **Never put calc_eval or business logic in UI files**
+2. **Always import logic modules**
+3. **UI functions should only orchestrate**
+4. **Prefix UI functions with ui_ or create_*_ui**
+5. **Use different ports for multiple UIs (7860, 7861, 7862)**
+
+### Imports
+1. Use relative paths for local imports
+2. Import at the top of the file
+3. Only import what you need
+4. Organize logic into reusable modules
+
+## Testing
+
+### Run Examples
+```bash
+# Regular programs
+uv run python main.py examples/calculator.alp
+
+# UI programs (auto-launches browser)
+uv run python main.py examples/ui/simple_calculator.alp
+```
+
+### Test Suite
+```bash
+uv run python main.py --test tests.jsonl
+```
+
+## Environment Variables
+
+### Essential
+- `ALP_IO_ROOT` - Root for file operations
+- `ALP_IO_ALLOW_WRITE` - Enable writes (0/1)
+- `ALP_HTTP_ALLOWLIST` - Allowed HTTP hosts
+- `ALP_EXPLAIN` - Debug execution (0/1)
+
+### LLM
+- `ALP_MODEL_PROVIDER` - mock|openai|anthropic
+- `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`
+
+## Common Mistakes to Avoid
+
+1. **Putting logic in UI files** - Always use imports
+2. **Missing @flow node** - Required for execution
+3. **Invalid JSON** - Each line must be valid JSON
+4. **Unescaped quotes** - Use \" in strings
+5. **Missing shape validation** - Define input/output shapes
+6. **Hardcoded values** - Use @const or parameters
+7. **No error handling** - Use try_catch for robustness
+8. **Port conflicts** - Use unique ports for each UI
+
+## File Naming Conventions
+
+- Logic modules: `feature.alp` (e.g., `calculator.alp`)
+- UI files: `simple_feature.alp` or `feature_ui.alp`
+- Test files: `test_feature.alp`
+- Shared types: `types.alp` or `shapes.alp`
+
+## Debugging
+
+1. Use `ALP_EXPLAIN=1` for execution trace
+2. Check JSON validity with `jq` or online validators
+3. Test functions independently before UI integration
+4. Verify file permissions and paths
+5. Check environment variables are set correctly

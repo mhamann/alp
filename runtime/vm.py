@@ -580,21 +580,27 @@ def exec_fn(fn, shapes, fns, inbound=None, tools=None):
     if inbound is not None:
         declared_inputs = (fn.get("in") or {})
         if declared_inputs:
-            if len(declared_inputs) == 1 and isinstance(inbound, dict):
-                # Single input with dict inbound - check if dict has matching key
-                input_name = next(iter(declared_inputs.keys()))
-                if input_name in inbound:
-                    env[input_name] = inbound[input_name]
-                else:
+            # Handle typed inputs (e.g., "in": "CalcInput")
+            if isinstance(declared_inputs, str):
+                # Input is a type reference - bind entire inbound to "in"
+                env["in"] = inbound
+            elif isinstance(declared_inputs, dict):
+                # Input is a dict of field definitions
+                if len(declared_inputs) == 1 and isinstance(inbound, dict):
+                    # Single input with dict inbound - check if dict has matching key
+                    input_name = next(iter(declared_inputs.keys()))
+                    if input_name in inbound:
+                        env[input_name] = inbound[input_name]
+                    else:
+                        env[input_name] = inbound
+                elif len(declared_inputs) == 1:
+                    # Single input with scalar inbound - bind directly
+                    input_name = next(iter(declared_inputs.keys()))
                     env[input_name] = inbound
-            elif len(declared_inputs) == 1:
-                # Single input with scalar inbound - bind directly
-                input_name = next(iter(declared_inputs.keys()))
-                env[input_name] = inbound
-            else:
-                # Multiple inputs - map entire inbound to each
-                for name in declared_inputs.keys():
-                    env[name] = inbound
+                else:
+                    # Multiple inputs - map entire inbound to each
+                    for name in declared_inputs.keys():
+                        env[name] = inbound
 
 
     for k, v in (fn.get("@const") or {}).items():
@@ -711,6 +717,13 @@ def run(path):
     # Import stdlib ops package
     from runtime.stdlib import register_all as _register_all
     _register_all(OPS, register_op)
+    
+    # Load extras if available (e.g., ui_gradio)
+    try:
+        from runtime.extras import register_all as _register_extras
+        _register_extras(OPS, register_op)
+    except ImportError:
+        pass  # Extras are optional
 
     shapes, fns, flow, tools = load_graph(path)
     if not flow:

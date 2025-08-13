@@ -1,0 +1,6 @@
+{"kind":"@import","path":"../calculator.alp"}
+{"kind":"@shape","id":"UICalcInput","fields":{"expression":"str"}}
+{"kind":"@shape","id":"UICalcResult","fields":{"result":"str","expression":"str"}}
+{"kind":"@fn","id":"ui_calculator_handler","in":"UICalcInput","out":"UICalcResult","@op":[["calc_eval",{"expr":"$in.expression"},{"as":"result"}]],"@expect":{"result":"$result.value","expression":"$in.expression"}}
+{"kind":"@fn","id":"create_calculator_ui","in":{},"out":{"launched":"bool"},"@op":[["ui_create",{"title":"🧮 ALP Calculator","description":"Simple calculator interface using ALP's core calculator logic"},{"as":"created"}],["ui_add_input",{"name":"expression","type":"textbox","label":"Math Expression","default":"2 + 2 * 3","placeholder":"Enter math expression like: 2 + 2 * 3, sqrt(16), sin(pi/2)"},{"as":"input"}],["ui_add_output",{"name":"result","type":"json","label":"Calculation Result"},{"as":"output"}],["ui_set_handler",{"function":"ui_calculator_handler","inputs":["expression"],"outputs":["result"]},{"as":"handler"}],["ui_launch",{"port":7860},{"as":"launched"}],["ui_wait",{},{"as":"waited"}]],"@expect":{"launched":"$launched.launched"}}
+{"kind":"@flow","edges":[["create_calculator_ui",null,{}]]}

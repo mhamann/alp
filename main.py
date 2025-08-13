@@ -69,7 +69,26 @@ if program_path.endswith(".jsonl"):
             ok = False
     sys.exit(0 if ok else 1)
 else:
-    completed = subprocess.run([sys.executable, vm_path, program_path], capture_output=True, text=True)
-    print(completed.stdout)
-    if completed.stderr:
-        print(completed.stderr)
+    # Check if this is a UI program by looking for ui_launch operations
+    is_ui_program = False
+    try:
+        with open(program_path, 'r') as f:
+            content = f.read()
+            if 'ui_launch' in content or 'ui_create' in content:
+                is_ui_program = True
+    except:
+        pass
+    
+    if is_ui_program:
+        # For UI programs, don't capture output so the interface can display
+        print(f"🚀 Launching UI program: {program_path}")
+        print("📱 The web interface will open shortly...")
+        print("🛑 Press Ctrl+C to stop the server")
+        print()
+        subprocess.run([sys.executable, vm_path, program_path])
+    else:
+        # For regular programs, capture output as before
+        completed = subprocess.run([sys.executable, vm_path, program_path], capture_output=True, text=True)
+        print(completed.stdout)
+        if completed.stderr:
+            print(completed.stderr)
